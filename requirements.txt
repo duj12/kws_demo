@@ -4,4 +4,5 @@ argparse
 numpy
 torchaudio
 torch
-yaml
+pyaml
+multiprocessing-logging
