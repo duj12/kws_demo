@@ -1,4 +1,5 @@
-wave
+#wave
+librosa
 gradio
 argparse
 numpy

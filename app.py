@@ -13,7 +13,8 @@
 # limitations under the License.
 
 import gradio as gr
-import wave
+#import wave
+import librosa
 from stream_kws_ctc import KeyWordSpotter
 
 kws_xiaojing = KeyWordSpotter(ckpt_path='model/nihaoxiaojing/avg_30.pt',
@@ -22,7 +23,7 @@ kws_xiaojing = KeyWordSpotter(ckpt_path='model/nihaoxiaojing/avg_30.pt',
                      lexicon_path='model/lexicon.txt',
                      threshold=0.02,
                      min_frames=5,
-                     max_frames=150,
+                     max_frames=250,
                      interval_frames=50,
                      score_beam=3,
                      path_beam=20,
@@ -37,7 +38,7 @@ kws_xiaowen = KeyWordSpotter(ckpt_path='model/hixiaowen/avg_30.pt',
                      lexicon_path='model/lexicon.txt',
                      threshold=0.02,
                      min_frames=5,
-                     max_frames=150,
+                     max_frames=250,
                      interval_frames=50,
                      score_beam=3,
                      path_beam=20,
@@ -59,9 +60,13 @@ def detection(audio, kw):
     if audio is None:
         return "Input Error! Please enter one audio!"
 
-    with wave.open(audio, 'rb') as fin:
-        assert fin.getnchannels() == 1
-        wav = fin.readframes(fin.getnframes())
+    # with wave.open(audio, 'rb') as fin:
+    #     assert fin.getnchannels() == 1
+    #     wav = fin.readframes(fin.getnframes())
+
+    y, _ = librosa.load(audio, sr=16000)
+    # NOTE: model supports 16k sample_rate
+    wav = (y * (1 << 15)).astype("int16").tobytes()
 
     # We inference every 0.3 seconds, in streaming fashion.
     interval = int(0.3 * 16000) * 2
