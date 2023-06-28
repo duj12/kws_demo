@@ -32,7 +32,7 @@ kws_xiaojing = KeyWordSpotter(ckpt_path='model/nihaoxiaojing/avg_30.pt',
 kws_xiaojing.set_keywords("你好小镜")
 
 kws_xiaowen = KeyWordSpotter(ckpt_path='model/hixiaowen/avg_30.pt',
-                     config_path='model/haixiaowen/config.yaml',
+                     config_path='model/hixiaowen/config.yaml',
                      token_path='model/tokens.txt',
                      lexicon_path='model/lexicon.txt',
                      threshold=0.02,
