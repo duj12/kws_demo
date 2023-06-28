@@ -34,6 +34,7 @@ kws.set_keywords("你好小镜")
 
 
 def detection(audio):
+    kws.reset_all()
     if audio is None:
         return "Input Error! Please enter one audio!"
 
