@@ -16,7 +16,8 @@ from __future__ import print_function
 
 import argparse
 import struct
-import wave
+#import wave
+import librosa
 import logging
 import os
 import math
@@ -471,9 +472,13 @@ def demo():
     if args.wav_path:
         # Caution: input WAV should be standard 16k, 16 bits, 1 channel
         # In demo we read wave in non-streaming fashion.
-        with wave.open(args.wav_path, 'rb') as fin:
-            assert fin.getnchannels() == 1
-            wav = fin.readframes(fin.getnframes())
+        # with wave.open(args.wav_path, 'rb') as fin:
+        #     assert fin.getnchannels() == 1
+        #     wav = fin.readframes(fin.getnframes())
+
+        y, _ = librosa.load(args.wav_path, sr=16000, mono=True)
+        # NOTE: model supports 16k sample_rate
+        wav = (y * (1 << 15)).astype("int16").tobytes()
 
         # We inference every 0.3 seconds, in streaming fashion.
         interval = int(0.3 * 16000) * 2
@@ -493,9 +498,13 @@ def demo():
                 assert len(line) == 2, f"The scp should be in kaldi format: \"utt_name wav_path\", but got {line}"
 
                 utt_name, wav_path = line[0], line[1]
-                with wave.open(wav_path, 'rb') as fin:
-                    assert fin.getnchannels() == 1
-                    wav = fin.readframes(fin.getnframes())
+                # with wave.open(args.wav_path, 'rb') as fin:
+                #     assert fin.getnchannels() == 1
+                #     wav = fin.readframes(fin.getnframes())
+
+                y, _ = librosa.load(args.wav_path, sr=16000, mono=True)
+                # NOTE: model supports 16k sample_rate
+                wav = (y * (1 << 15)).astype("int16").tobytes()
 
                 kws.reset_all()
                 activated = False
