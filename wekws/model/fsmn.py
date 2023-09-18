@@ -216,7 +216,7 @@ class FSMNBlock(nn.Module):
         self.dequant = torch.quantization.DeQuantStub()
 
     def forward(self,
-                input: Tuple[torch.Tensor, torch.Tensor] ):
+                input: Tuple[torch.Tensor, torch.Tensor]):
         if isinstance(input, tuple):
             input, in_cache = input
         else :
@@ -225,20 +225,24 @@ class FSMNBlock(nn.Module):
         x_per = x.permute(0, 3, 2, 1)
 
         if in_cache is None or len(in_cache) == 0 :
-            x_pad = F.pad(x_per, [0, 0, (self.lorder - 1) * self.lstride + self.rorder * self.rstride, 0])
+            x_pad = F.pad(x_per, [0, 0, (self.lorder - 1) * self.lstride
+                                  + self.rorder * self.rstride, 0])
         else:
             in_cache = in_cache.to(x_per.device)
             x_pad = torch.cat((in_cache, x_per), dim=2)
-        in_cache = x_pad[:, :, -((self.lorder - 1) * self.lstride + self.rorder * self.rstride):, :]
+        in_cache = x_pad[:, :, -((self.lorder - 1) * self.lstride
+                                 + self.rorder * self.rstride):, :]
         y_left = x_pad[:, :, :-self.rorder * self.rstride, :]
         y_left = self.quant(y_left)
         y_left = self.conv_left(y_left)
         y_left = self.dequant(y_left)
-        out = x_pad[:, :, (self.lorder - 1) * self.lstride:-self.rorder * self.rstride, :] + y_left
+        out = x_pad[:, :, (self.lorder - 1) * self.lstride: -self.rorder *
+                    self.rstride, :] + y_left
 
         if self.conv_right is not None:
             # y_right = F.pad(x_per, [0, 0, 0, (self.rorder) * self.rstride])
-            y_right = x_pad[:, :, -(x_per.size(2)+self.rorder*self.rstride):, :]
+            y_right = x_pad[:, :, -(
+                x_per.size(2) + self.rorder * self.rstride):, :]
             y_right = y_right[:, :, self.rstride:, :]
             y_right = self.quant(y_right)
             y_right = self.conv_right(y_right)
@@ -253,8 +257,9 @@ class FSMNBlock(nn.Module):
     def to_kaldi_net(self):
         re_str = ''
         re_str += '<Fsmn> %d %d\n' % (self.dim, self.dim)
-        re_str += '<LearnRateCoef> %d <LOrder> %d <ROrder> %d <LStride> %d <RStride> %d <MaxNorm> 0\n' % (
-            1, self.lorder, self.rorder, self.lstride, self.rstride)
+        re_str += '<LearnRateCoef> %d <LOrder> %d <ROrder> %d ' \
+            '<LStride> %d <RStride> %d <MaxNorm> 0\n' % (
+                1, self.lorder, self.rorder, self.lstride, self.rstride)
 
         # print(self.conv_left.weight,self.conv_right.weight)
         lfiters = self.state_dict()['conv_left.weight']
@@ -441,7 +446,8 @@ class FSMN(nn.Module):
         self.output_affine_dim = output_affine_dim
         self.output_dim = output_dim
 
-        self.padding = (self.lorder-1) * self.lstride + self.rorder * self.rstride
+        self.padding = (self.lorder - 1) * self.lstride \
+            + self.rorder * self.rstride
 
         self.in_linear1 = AffineTransform(input_dim, input_affine_dim)
         self.in_linear2 = AffineTransform(input_affine_dim, linear_dim)
@@ -469,7 +475,10 @@ class FSMN(nn.Module):
         """
 
         if in_cache is None or len(in_cache) == 0 :
-            in_cache = [torch.zeros(0, 0, 0, 0, dtype=torch.float) for _ in range(len(self.fsmn))]
+            in_cache = [torch.zeros(0, 0, 0, 0, dtype=torch.float)
+                        for _ in range(len(self.fsmn))]
+        else:
+            in_cache = [in_cache[:, :, :, i: i + 1] for i in range(in_cache.size(-1))]
         input = (input, in_cache)
         x1 = self.in_linear1(input)
         x2 = self.in_linear2(x1)
@@ -483,7 +492,7 @@ class FSMN(nn.Module):
         # x7 = self.softmax(x6)
         x7, _ = x6
         # return x7, None
-        return x7, in_cache
+        return x7, torch.cat(in_cache, dim=-1)
 
     def to_kaldi_net(self):
         re_str = ''
