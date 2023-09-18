@@ -32,7 +32,7 @@ from wekws.model.kws_model import init_model
 from wekws.utils.checkpoint import load_checkpoint
 from tools.make_list import query_token_set, read_lexicon, read_token
 
-
+logging.basicConfig(level=logging.INFO)
 def get_args():
     parser = argparse.ArgumentParser(description='detect keywords online.')
     parser.add_argument('--config', required=True, help='config file')
@@ -431,6 +431,13 @@ class KeyWordSpotter(torch.nn.Module):
                 # TODO: there should give another method to update result, avoiding self.result being cleared.
                 break
         self.total_frames += len(probs) * self.downsampling  # update frame offset
+        # For streaming kws, the cur_hyps should be reset if the time of
+        # a possible keyword last over the max_frames value you set.
+        # see this issue:https://github.com/duj12/kws_demo/issues/2
+        if len(self.cur_hyps[0][0]) > 0 :
+            keyword_may_start = int(self.cur_hyps[0][1][2][0]['frame'])
+            if (self.total_frames - keyword_may_start) > self.max_frames:
+                self.reset()
         return self.result
 
     def reset(self):
