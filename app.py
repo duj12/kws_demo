@@ -17,21 +17,6 @@ import gradio as gr
 import librosa
 from stream_kws_ctc import KeyWordSpotter
 
-kws_xiaojing = KeyWordSpotter(ckpt_path='model/nihaoxiaojing/avg_30.pt',
-                     config_path='model/nihaoxiaojing/config.yaml',
-                     token_path='model/tokens.txt',
-                     lexicon_path='model/lexicon.txt',
-                     threshold=0.02,
-                     min_frames=5,
-                     max_frames=250,
-                     interval_frames=50,
-                     score_beam=3,
-                     path_beam=20,
-                     gpu=-1,
-                     is_jit_model=False,)
-
-kws_xiaojing.set_keywords("你好小镜")
-
 kws_xiaowen = KeyWordSpotter(ckpt_path='model/hixiaowen/avg_30.pt',
                      config_path='model/hixiaowen/config.yaml',
                      token_path='model/tokens.txt',
@@ -48,9 +33,7 @@ kws_xiaowen = KeyWordSpotter(ckpt_path='model/hixiaowen/avg_30.pt',
 kws_xiaowen.set_keywords("嗨小问,你好问问")
 
 def detection(audio, kw):
-    if kw=='nihaoxiaojing':
-        kws=kws_xiaojing
-    elif kw=='hixiaowen' or kw=='nihaowenwen':
+    if kw=='hixiaowen' or kw=='nihaowenwen':
         kws=kws_xiaowen
 
     else:  # for other input data, we recommend xiaowen model
@@ -86,16 +69,12 @@ def detection(audio, kw):
 # input
 inputs = [
     gr.inputs.Audio(source="microphone", type="filepath", label='Input audio'),
-    gr.Radio(['nihaoxiaojing', 'hixiaowen', 'nihaowenwen', 'none'], label='kw')
+    gr.Radio(['hixiaowen', 'nihaowenwen', 'none'], label='kw')
 ]
 
 output = gr.outputs.Textbox(label="Output Result")
 
 examples = [
-    ['examples/chentianbo_ceqianfang_anjing_0001.wav', 'nihaoxiaojing'],
-    ['examples/chentianbo_ceqianfang_neiwaizao_0001.wav', 'nihaoxiaojing'],
-    ['examples/chentianbo_ceqianfang_neizao_0001.wav', 'nihaoxiaojing'],
-    ['examples/chentianbo_ceqianfang_waizao_0001.wav', 'nihaoxiaojing'],
     ['examples/gongqu-4.5_0000.wav', 'none'],
     ['examples/neiwaizao-35.5h_0000.wav', 'none'],
     ['examples/neizao-4.5h_0000.wav', 'none'],
@@ -106,11 +85,11 @@ examples = [
     ['examples/000eae543947c70feb9401f82da03dcf.wav', 'hixiaowen'],
 ]
 
-text = "Key Word Spotting | 关键词检测"
+text = "Key Word Spotting | 关键词/唤醒词检测"
 
 # description
 description = (
-    "KWS Demo! 'nihaoxiaojing' model is for farfield, 'hixiaowen' and 'nihaowenwen' is for nearfield."
+    "KWS Demo! Support 'hixiaowen' and 'nihaowenwen'."
 )
 
 interface = gr.Interface(
